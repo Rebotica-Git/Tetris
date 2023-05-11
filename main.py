@@ -1,5 +1,20 @@
+import time
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 import socket
+from PyQt5.QtWidgets import *
+
+
+def find(raw: str):
+    first = None
+    for num, sign in enumerate(raw):
+        if sign == "<":
+            first = num
+        if sign == ">" and first is not None:
+            second = num
+            result = list(raw[first + 1:second].split(","))
+            return result
+    return ""
 
 
 class Ui_MainWindow(object):
@@ -148,6 +163,30 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
         except:
             print("Не смог подключиться")
             return
+
+        tick = 0
+        while True:
+            try:
+                data = sock.recv(1024).decode()
+                data = find(data)
+                if data[0] == "0":
+                    return
+                elif data[0] == "-1":
+                    wrong = QMessageBox()
+                    wrong.setWindowTitle("Внимание!")
+                    wrong.setText("Неправильный пароль. Попробуйте ещё раз.")
+                    wrong.setIcon(QMessageBox.Icon.Warning)
+                    wrong.setWindowIcon(QtGui.QIcon('warn.png'))
+                    wrong.exec()
+                    return
+                else:
+                    return
+
+            except:
+                tick += 1
+                time.sleep(0.5)
+                if tick == 3:
+                    return
 
 
 
