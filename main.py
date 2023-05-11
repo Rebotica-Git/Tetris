@@ -106,7 +106,7 @@ class Ui_MainWindow(object):
 class Window(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
-
+        self.score = 0
         self.name = None
         self.pasw = None
         self.ip = None
@@ -141,57 +141,75 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             result[1] = True
         return tuple(result)
 
-    # def connect(self):
-    #     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #     sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-    #
-    #     empty = self.empty_check()
-    #     if not all(empty):
-    #         print("Поля пустые!")
-    #         return
-    #
-    #     if not self.ip_check():
-    #         print("IP-адрес не верен!")
-    #         return
-    #
-    #     self.ip = ".".join(self.ip)
-    #     self.port = int(self.port)
-    #     try:
-    #         sock.connect((self.ip, self.port))
-    #         info = f"<{self.name},{self.pasw}>".encode()
-    #         sock.send(info)
-    #     except:
-    #         print("Не смог подключиться")
-    #         return
-    #
-    #     tick = 0
-    #     while True:
-    #         try:
-    #             data = sock.recv(1024).decode()
-    #             data = find(data)
-    #             if data[0] == "0":
-    #                 return
-    #             elif data[0] == "-1":
-    #                 wrong = QMessageBox()
-    #                 wrong.setWindowTitle("Внимание!")
-    #                 wrong.setText("Неправильный пароль. Попробуйте ещё раз.")
-    #                 wrong.setIcon(QMessageBox.Icon.Warning)
-    #                 wrong.setWindowIcon(QtGui.QIcon('warn.png'))
-    #                 wrong.exec()
-    #                 return
-    #             else:
-    #                 return
-    #
-    #         except:
-    #             tick += 1
-    #             time.sleep(0.5)
-    #             if tick == 3:
-    #                 return
-
     def connect(self):
-        self.tetris = tetris.Tetris(self)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+
+        empty = self.empty_check()
+        if not all(empty):
+            print("Поля пустые!")
+            return
+
+        if not self.ip_check():
+            print("IP-адрес не верен!")
+            return
+
+        self.ip = ".".join(self.ip)
+        self.port = int(self.port)
+        try:
+            sock.connect((self.ip, self.port))
+            info = f"<{self.name},{self.pasw}>".encode()
+            sock.send(info)
+        except:
+            print("Не смог подключиться")
+            return
+
+        tick = 0
+        while True:
+            try:
+                data = sock.recv(1024).decode()
+                data = find(data)
+                if int(data[0]) >= 0:
+                    self.start_game()
+                    return
+                if data[0] == "0":
+                    return
+                elif data[0] == "-1":
+                    wrong = QMessageBox()
+                    wrong.setWindowTitle("Внимание!")
+                    wrong.setText("Неправильный пароль. Попробуйте ещё раз.")
+                    wrong.setIcon(QMessageBox.Icon.Warning)
+                    wrong.setWindowIcon(QtGui.QIcon('warn.png'))
+                    wrong.exec()
+                    return
+                else:
+                    return
+
+            except:
+                tick += 1
+                time.sleep(0.5)
+                if tick == 3:
+                    return
+
+    def start_game(self):
+        self.tetris = tetris.Tetris(self, app)
         self.tetris.setStyleSheet("background-color: white")
         self.tetris.show()
+        self.close()
+
+    def showEvent(self, event):
+        if self.score == 0:
+            return
+
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        try:
+            sock.connect((self.ip, self.port))
+            info = f"<final,{self.name},{self.pasw},{self.score}>".encode()
+            sock.send(info)
+        except:
+            print("Не смог подключиться")
+            return
 
 
 stylesheet = """ 

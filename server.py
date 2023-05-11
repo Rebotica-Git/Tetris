@@ -61,14 +61,20 @@ while run:
         try:
             data = sock.recv(1024).decode()
             data = find(data)
+            if data[0] == "final":
+                data.remove("final")
+                player = s.get(Player, data[0])
+                if player.score < int(data[2]):
+                    player.score = int(data[2])
+                    s.merge(player)
+                    s.commit()
             if data:
                 player = Player(data[0], data[1])
                 s.add(player)
                 s.commit()
                 sock.send("<0>".encode())
-            print("Получил", data)
-            run = False
-            break
+                sock.close()
+                players.remove(sock)
         except sqlalchemy.exc.IntegrityError:
             s.rollback()
             player = s.get(Player, data[0])
@@ -76,9 +82,9 @@ while run:
                 sock.send(f"<{player.score}>".encode())
             else:
                 sock.send("<-1>".encode())
-            break
+            sock.close()
+            players.remove(sock)
         except BlockingIOError:
             pass
-
 
     time.sleep(1)
