@@ -4,6 +4,8 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import socket
 from PyQt5.QtWidgets import *
 
+import tetris
+
 
 def find(raw: str):
     first = None
@@ -101,7 +103,6 @@ class Ui_MainWindow(object):
         self.enter_button.setText(_translate("MainWindow", "Вход"))
 
 
-
 class Window(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
@@ -140,54 +141,57 @@ class Window(QtWidgets.QMainWindow, Ui_MainWindow):
             result[1] = True
         return tuple(result)
 
+    # def connect(self):
+    #     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #     sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+    #
+    #     empty = self.empty_check()
+    #     if not all(empty):
+    #         print("Поля пустые!")
+    #         return
+    #
+    #     if not self.ip_check():
+    #         print("IP-адрес не верен!")
+    #         return
+    #
+    #     self.ip = ".".join(self.ip)
+    #     self.port = int(self.port)
+    #     try:
+    #         sock.connect((self.ip, self.port))
+    #         info = f"<{self.name},{self.pasw}>".encode()
+    #         sock.send(info)
+    #     except:
+    #         print("Не смог подключиться")
+    #         return
+    #
+    #     tick = 0
+    #     while True:
+    #         try:
+    #             data = sock.recv(1024).decode()
+    #             data = find(data)
+    #             if data[0] == "0":
+    #                 return
+    #             elif data[0] == "-1":
+    #                 wrong = QMessageBox()
+    #                 wrong.setWindowTitle("Внимание!")
+    #                 wrong.setText("Неправильный пароль. Попробуйте ещё раз.")
+    #                 wrong.setIcon(QMessageBox.Icon.Warning)
+    #                 wrong.setWindowIcon(QtGui.QIcon('warn.png'))
+    #                 wrong.exec()
+    #                 return
+    #             else:
+    #                 return
+    #
+    #         except:
+    #             tick += 1
+    #             time.sleep(0.5)
+    #             if tick == 3:
+    #                 return
 
     def connect(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-
-        empty = self.empty_check()
-        if not all(empty):
-            print("Поля пустые!")
-            return
-
-        if not self.ip_check():
-            print("IP-адрес не верен!")
-            return
-
-        self.ip = ".".join(self.ip)
-        self.port = int(self.port)
-        try:
-            sock.connect((self.ip, self.port))
-            info = f"<{self.name},{self.pasw}>".encode()
-            sock.send(info)
-        except:
-            print("Не смог подключиться")
-            return
-
-        tick = 0
-        while True:
-            try:
-                data = sock.recv(1024).decode()
-                data = find(data)
-                if data[0] == "0":
-                    return
-                elif data[0] == "-1":
-                    wrong = QMessageBox()
-                    wrong.setWindowTitle("Внимание!")
-                    wrong.setText("Неправильный пароль. Попробуйте ещё раз.")
-                    wrong.setIcon(QMessageBox.Icon.Warning)
-                    wrong.setWindowIcon(QtGui.QIcon('warn.png'))
-                    wrong.exec()
-                    return
-                else:
-                    return
-
-            except:
-                tick += 1
-                time.sleep(0.5)
-                if tick == 3:
-                    return
-
+        self.tetris = tetris.Tetris(self)
+        self.tetris.setStyleSheet("background-color: white")
+        self.tetris.show()
 
 
 stylesheet = """ 
@@ -197,9 +201,9 @@ QMainWindow {
         background-position: center; 
 } """
 
-
 if __name__ == "__main__":
     import sys
+
     app = QtWidgets.QApplication(sys.argv)
     app.setStyleSheet(stylesheet)
     w = Window()
